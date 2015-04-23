@@ -1,8 +1,9 @@
 package schema
 
 type MessageFeed struct {
-	Messages []*Message `json:"messages"`
-	Meta     *Meta      `json:"meta"`
+	Messages   []*Message   `json:"messages"`
+	References []*Reference `json:"references"`
+	Meta       *Meta        `json:"meta"`
 }
 
 type Message struct {
