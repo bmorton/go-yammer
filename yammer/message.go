@@ -1,12 +1,8 @@
 package yammer
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
-	"log"
-	"net/http"
 
 	"github.com/bmorton/go-yammer/schema"
 )
@@ -18,22 +14,8 @@ type CreateMessageParams struct {
 }
 
 func (c *Client) PostMessage(payload *CreateMessageParams) (*schema.Message, error) {
-	var b bytes.Buffer
-	enc := json.NewEncoder(&b)
-	enc.Encode(payload)
-
-	url := fmt.Sprintf("%s/api/v1/messages.json", c.baseURL)
-	req, err := http.NewRequest("POST", url, &b)
+	resp, err := c.sendRequest(payload, "POST", "/api/v1/messages.json")
 	if err != nil {
-		return &schema.Message{}, err
-	}
-
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.bearerToken))
-	req.Header.Add("Content-Type", "application/json")
-
-	resp, err := c.connection.Do(req)
-	if err != nil {
-		log.Println(err)
 		return &schema.Message{}, err
 	}
 
