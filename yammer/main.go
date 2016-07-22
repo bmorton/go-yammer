@@ -21,8 +21,12 @@ func New(bearerToken string) *Client {
 	}
 }
 
+func (c *Client) SetBaseURL(url string) {
+	c.baseURL = url
+}
+
 func (c *Client) SetStaging() {
-	c.baseURL = "https://www.staging.yammer.com"
+	c.SetBaseURL("https://www.staging.yammer.com")
 }
 
 func (c *Client) sendRequest(payload interface{}, verb string, endpoint string) (*http.Response, error) {
