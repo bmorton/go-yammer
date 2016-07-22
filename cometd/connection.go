@@ -3,8 +3,6 @@ package cometd
 import (
 	"encoding/json"
 	"io/ioutil"
-
-	"github.com/bmorton/go-yammer/schema"
 )
 
 type ConnectionRequest struct {
@@ -15,13 +13,13 @@ type ConnectionRequest struct {
 }
 
 type ConnectionResponse struct {
-	Channel string          `json:"channel"`
-	Data    *ConnectionData `json:"data"`
+	Channel string      `json:"channel"`
+	Data    interface{} `json:"data"`
 }
 
 type ConnectionData struct {
-	Data *schema.MessageFeed `json:"data"`
-	Type string              `json:"type"`
+	Data string `json:"data"`
+	Type string `json:"type"`
 }
 
 func (c *Client) connect() ([]*ConnectionResponse, error) {

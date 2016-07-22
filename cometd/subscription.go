@@ -1,6 +1,9 @@
 package cometd
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 type SubscriptionRequest struct {
 	Channel      string `json:"channel"`
@@ -9,9 +12,21 @@ type SubscriptionRequest struct {
 	ClientId     string `json:"clientId"`
 }
 
-func (c *Client) Subscribe(channelId string) error {
-	_, err := c.do(c.subscriptionRequest(channelId))
+func (c *Client) SubscribeToChannel(channel string) error {
+	_, err := c.do([]*SubscriptionRequest{
+		&SubscriptionRequest{
+			Channel:      "/meta/subscribe",
+			Subscription: channel,
+			Id:           c.nextRequestId(),
+			ClientId:     c.clientId,
+		},
+	})
+
 	return err
+}
+
+func (c *Client) SubscribeToFeed(channelId string) (*http.Response, error) {
+	return c.do(c.subscriptionRequest(channelId))
 }
 
 func (c *Client) subscriptionRequest(channelId string) []*SubscriptionRequest {

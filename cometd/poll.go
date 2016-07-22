@@ -2,11 +2,10 @@ package cometd
 
 import (
 	"fmt"
-
-	"github.com/bmorton/go-yammer/schema"
+	"log"
 )
 
-func (c *Client) Poll(messageChan chan *schema.MessageFeed, stopChan chan bool) {
+func (c *Client) Poll(messageChan chan interface{}, stopChan chan bool) {
 	for {
 		select {
 		case <-stopChan:
@@ -15,12 +14,12 @@ func (c *Client) Poll(messageChan chan *schema.MessageFeed, stopChan chan bool) 
 		default:
 			resp, err := c.connect()
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				return
 			}
 			for _, r := range resp {
-				if r.Data != nil {
-					messageChan <- r.Data.Data
+				if r != nil {
+					messageChan <- r
 				}
 			}
 		}
