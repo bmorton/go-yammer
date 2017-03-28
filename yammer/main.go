@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"net/http/httputil"
 )
 
 type Client struct {
@@ -19,6 +21,10 @@ func New(bearerToken string) *Client {
 		bearerToken: bearerToken,
 		connection:  &http.Client{},
 	}
+}
+
+func (c *Client) Token() string {
+	return c.bearerToken
 }
 
 func (c *Client) SetBaseURL(url string) {
@@ -42,6 +48,16 @@ func (c *Client) sendRequest(payload interface{}, verb string, endpoint string) 
 
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.bearerToken))
 	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Yammer-Capabilities", "external_messaging,external_groups,system_request,user_sidebar,parsed_body_only2")
 
 	return c.connection.Do(req)
+}
+
+func debug(response *http.Response) {
+	dump, err := httputil.DumpResponse(response, true)
+	if err == nil {
+		fmt.Printf("%s\n\n", dump)
+	} else {
+		log.Fatalf("%s\n\n", err)
+	}
 }
