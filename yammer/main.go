@@ -13,6 +13,7 @@ type Client struct {
 	baseURL     string
 	bearerToken string
 	connection  *http.Client
+	DebugMode   bool
 }
 
 func New(bearerToken string) *Client {
@@ -50,13 +51,22 @@ func (c *Client) sendRequest(payload interface{}, verb string, endpoint string) 
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Yammer-Capabilities", "external_messaging,external_groups,system_request,user_sidebar,parsed_body_only2")
 
-	return c.connection.Do(req)
+	if c.DebugMode {
+		debug(httputil.DumpRequestOut(req, true))
+	}
+
+	resp, err := c.connection.Do(req)
+
+	if c.DebugMode {
+		debug(httputil.DumpResponse(resp, true))
+	}
+
+	return resp, err
 }
 
-func debug(response *http.Response) {
-	dump, err := httputil.DumpResponse(response, true)
+func debug(data []byte, err error) {
 	if err == nil {
-		fmt.Printf("%s\n\n", dump)
+		fmt.Printf("%s\n\n", data)
 	} else {
 		log.Fatalf("%s\n\n", err)
 	}
