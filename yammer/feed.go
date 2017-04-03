@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/httputil"
 
 	"github.com/bmorton/go-yammer/schema"
 	"github.com/google/go-querystring/query"
@@ -125,10 +126,18 @@ func (c *Client) InboxFeed() (*schema.MessageFeed, error) {
 
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.bearerToken))
 
+	if c.DebugMode {
+		debug(httputil.DumpRequestOut(req, true))
+	}
+
 	resp, err := c.connection.Do(req)
 	if err != nil {
 		log.Println(err)
 		return &schema.MessageFeed{}, err
+	}
+
+	if c.DebugMode {
+		debug(httputil.DumpResponse(resp, true))
 	}
 
 	defer resp.Body.Close()
@@ -141,6 +150,59 @@ func (c *Client) InboxFeed() (*schema.MessageFeed, error) {
 	err = json.Unmarshal(body, &feed)
 	if err != nil {
 		return &schema.MessageFeed{}, err
+	}
+
+	return &feed, nil
+}
+
+type InboxFeedV2Options struct {
+	ThreadReadState      string `url:"thread_read_state,omitempty"`
+	ThreadsCount         int    `url:"threads_count,omitempty"`
+	MessagesCount        int    `url:"messages_count,omitempty"`
+	FollowedThreads      bool   `url:"followed_threads"`
+	IncludeThreadStarter bool   `url:"include_thread_starter"`
+}
+
+var SimpleInboxHydrantOptions = `inboxes(id,threads(id,thread_starter_id,read_only,messages(id,thread_id,sender_id,replied_to_id,created_at,body,title,references,updated_at,like_ids,additional_data),state(unseen_message_count,last_read_message)),reference_data(users(id,full_name,email)))`
+
+func (c *Client) InboxFeedV2(options InboxFeedV2Options, payload string) (*schema.HydrantFeed, error) {
+	if payload == "" {
+		payload = SimpleInboxHydrantOptions
+	}
+	querystring, _ := query.Values(options)
+	url := fmt.Sprintf("%s/api/v2/inboxes?%s", c.baseURL, querystring.Encode())
+
+	req, err := http.NewRequest("POST", url, bytes.NewBufferString(payload))
+	if err != nil {
+		return &schema.HydrantFeed{}, err
+	}
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.bearerToken))
+	req.Header.Set("Content-Type", "text/plain; charset=UTF-8")
+	req.Header.Set("Accept", "application/json")
+
+	if c.DebugMode {
+		debug(httputil.DumpRequestOut(req, true))
+	}
+
+	resp, err := c.connection.Do(req)
+	if err != nil {
+		return &schema.HydrantFeed{}, err
+	}
+	defer resp.Body.Close()
+
+	if c.DebugMode {
+		debug(httputil.DumpResponse(resp, true))
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return &schema.HydrantFeed{}, err
+	}
+
+	var feed schema.HydrantFeed
+	err = json.Unmarshal(body, &feed)
+	if err != nil {
+		return &schema.HydrantFeed{}, err
 	}
 
 	return &feed, nil
